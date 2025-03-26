@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 import time
 
@@ -7,11 +8,13 @@ from openai import OpenAI
 
 
 def handler(event, context):
+    request = json.loads(event["body"])
+
     client = OpenAI()
     client.api_key = os.getenv("OPENAI_API_KEY")  # API keyのセット
     response = client.images.generate(
         model="dall-e-3",  # モデル
-        prompt="very very cute cats",  # プロンプト
+        prompt=request["text"],  # プロンプト
         n=1,  # 生成数
         size="1024x1024",  # 解像度 dall-e-3では1024x1024、1792x1024、1024x1792
         response_format="b64_json",  # レスポンスフォーマット url or b64_json
@@ -38,7 +41,14 @@ def handler(event, context):
     )
 
     # 署名付きURLを返す
-    return {"statusCode": 200, "body": {"presigned_url": presigned_url}}
+    return {
+        "statusCode": 200,
+        "body": json.dumps(
+            {
+                "presigned_url": presigned_url,
+            }
+        ),
+    }
 
 
 if __name__ == "__main__":
